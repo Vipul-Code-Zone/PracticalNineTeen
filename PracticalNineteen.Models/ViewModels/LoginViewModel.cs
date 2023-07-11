@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PracticalNineteen.Models.Models
+namespace PracticalNineteen.Models.ViewModels
 {
-    public class UserLogin
+    public class LoginViewModel
     {
         [Key]
         [Required]

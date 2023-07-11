@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using PracticalNineteen.Models.Models;
+using PracticalNineteen.Models.ViewModels;
 
 namespace PracticalNineteen.Db.DatabaseContext
 {

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PracticalNineteen.Db.DatabaseContext;
+using PracticalNineteen.Db.Interfaces;
+using PracticalNineteen.Db.Repository;
 using System.Text;
 
 namespace PracticalNineteen.API
@@ -32,15 +34,13 @@ namespace PracticalNineteen.API
             {
                 options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidAudience = "",
-                    ValidIssuer = "",
                     RequireExpirationTime = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("Key for encryption")),
-                    ValidateIssuerSigningKey = true
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"])),
+                    ValidateIssuerSigningKey = true,
                 };
             });
+
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
 
             var app = builder.Build();
 
@@ -52,7 +52,7 @@ namespace PracticalNineteen.API
             }
 
             app.UseHttpsRedirection();
-
+            app.UseAuthentication();
             app.UseAuthorization();
 
 

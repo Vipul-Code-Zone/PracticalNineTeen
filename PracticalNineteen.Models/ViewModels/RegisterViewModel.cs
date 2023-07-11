@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PracticalNineteen.Models.Models
+namespace PracticalNineteen.Models.ViewModels
 {
-    public class UserRegister
+    public class RegisterViewModel
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
