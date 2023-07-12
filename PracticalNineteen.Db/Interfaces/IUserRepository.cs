@@ -12,5 +12,6 @@ namespace PracticalNineteen.Db.Interfaces
         Task<UserManagerRespose> RegisterUserAsync(RegisterViewModel model);
         Task<UserManagerRespose> LoginUserAsync(LoginViewModel model);
         Task<UserManagerRespose> LogoutUserAsync(Logout model);
+        Task<IEnumerable<RegisteredUser>> GetUsers();
     }
 }

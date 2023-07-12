@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PracticalNineteen.Db.Interfaces;
 using PracticalNineteen.Models.ViewModels;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace PracticalNineteen.API.Controllers
 {
@@ -25,7 +27,7 @@ namespace PracticalNineteen.API.Controllers
                     return Ok(result);
                 } else
                 {
-                    return BadRequest(result);
+                    return BadRequest(result.Message);
                 }
             }
             return BadRequest("Properties are not valid");
@@ -36,8 +38,9 @@ namespace PracticalNineteen.API.Controllers
             if (ModelState.IsValid)
             {
                 var result = await _userRepository.LoginUserAsync(model);
+
                 if (result.IsSuccess)
-                {
+                {                    
                     return Ok(result);
                 }
                 else
@@ -56,6 +59,13 @@ namespace PracticalNineteen.API.Controllers
                 return Ok();
             }
             return BadRequest();
+        }
+        [Authorize(Roles = "Admin")]
+        [HttpGet("Users")]
+        public async Task<IActionResult> GetAll()
+        {
+            var data = await _userRepository.GetUsers();
+            return Ok(data);
         }
     }
 }

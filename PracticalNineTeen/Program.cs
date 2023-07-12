@@ -8,8 +8,16 @@ namespace PracticalNineTeen
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+            //HTTP client configurations
+
+            builder.Services.AddHttpClient("studentApi", opt =>
+            {
+                opt.BaseAddress = new Uri(builder.Configuration.GetValue<string>("API_URL"));
+            });
+            builder.Services.AddHttpContextAccessor();
 
             var app = builder.Build();
+
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

@@ -1,0 +1,46 @@
+﻿@model IEnumerable<PracticalNineteen.Models.ViewModels.RegisteredUser>
+
+@{
+    ViewData["Title"] = "GetAllUser";
+}
+
+<h2 class="text-center">All Users with Roles</h2>
+<div class="d-flex justify-content-center">
+    <hr class="w-25"/>
+</div>
+
+
+<table class="table text-center table-bordered table-striped table-hover">
+    <thead>
+        <tr class="table-dark">
+            <th>
+                @Html.DisplayNameFor(model => model.Email)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Role)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Count() != 0)
+        {
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Email)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Role)
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="2">You are not Authenticated to view data</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using PracticalNineteen.Db.DatabaseContext;
 using PracticalNineteen.Db.Interfaces;
 using PracticalNineteen.Models.ViewModels;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -14,19 +17,21 @@ namespace PracticalNineteen.Db.Repository
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly UserDbContext _userDbContext;
 
 
-        public UserRepository(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, SignInManager<IdentityUser> signInManager)
+        public UserRepository(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, SignInManager<IdentityUser> signInManager, UserDbContext userDbContext)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _signInManager = signInManager;
+            _userDbContext = userDbContext;
         }
 
         public async Task<UserManagerRespose> LoginUserAsync(LoginViewModel model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
-            if(user == null)
+            if (user == null)
             {
                 return new UserManagerRespose
                 {
@@ -35,7 +40,7 @@ namespace PracticalNineteen.Db.Repository
                 };
             }
             var result = await _userManager.CheckPasswordAsync(user, model.Password);
-            if(!result)
+            if (!result)
             {
                 return new UserManagerRespose
                 {
@@ -43,11 +48,18 @@ namespace PracticalNineteen.Db.Repository
                     IsSuccess = false,
                 };
             }
-            var claims = new[]
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var claims = new List<Claim>()
             {
                 new Claim("Email", model.Email),
-                new Claim(ClaimTypes.NameIdentifier, user.Id)
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+
             };
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
+            }
 
             await _signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
             var keys = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyz"));
@@ -62,12 +74,21 @@ namespace PracticalNineteen.Db.Repository
             {
                 Message = tokenAsString,
                 IsSuccess = true,
-                ExpireDate = token.ValidTo
+                ExpireDate = token.ValidTo,
+                Email = user.Email,
             };
         }
 
         public async Task<UserManagerRespose> RegisterUserAsync(RegisterViewModel model)
         {
+            var email = await _userManager.FindByEmailAsync(model.Email);
+            if (email != null)
+            {
+                return new UserManagerRespose
+                {
+                    Message = $"{email} already exist!"
+                };
+            }
             var IdetityUser = new IdentityUser()
             {
                 Email = model.Email,
@@ -86,7 +107,7 @@ namespace PracticalNineteen.Db.Repository
                 {
                     await _roleManager.CreateAsync(new IdentityRole() { Name = "User" });
                 }
-                var test = await _userManager.AddToRoleAsync(IdetityUser, "Admin");
+                await _userManager.AddToRoleAsync(IdetityUser, "Admin");
 
                 return new UserManagerRespose
                 {
@@ -94,7 +115,7 @@ namespace PracticalNineteen.Db.Repository
                     IsSuccess = true,
                 };
             }
-            
+
             return new UserManagerRespose
             {
                 Message = "User not created try again!",
@@ -112,5 +133,33 @@ namespace PracticalNineteen.Db.Repository
                 IsSuccess = true,
             };
         }
+        
+        public async Task<IEnumerable<RegisteredUser>> GetUsers()
+        {
+
+            List<RegisteredUser> list = new List<RegisteredUser>();
+
+            foreach (var item in await _userManager.GetUsersInRoleAsync("Admin"))
+            {
+                list.Add(new RegisteredUser()
+                {
+                    Email = item.Email,
+                    Role = "Admin",
+                });
+            }
+
+            foreach (var item in await _userManager.GetUsersInRoleAsync("User"))
+            {
+                list.Add(new RegisteredUser()
+                {
+                    Email = item.Email,
+                    Role = "User",
+                });
+            }
+
+
+            return list;
+        }
+
     }
 }
