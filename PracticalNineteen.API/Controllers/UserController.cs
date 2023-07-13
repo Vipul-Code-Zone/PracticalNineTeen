@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PracticalNineteen.Db.Interfaces;
 using PracticalNineteen.Models.ViewModels;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace PracticalNineteen.API.Controllers
 {
@@ -16,16 +15,18 @@ namespace PracticalNineteen.API.Controllers
         {
             _userRepository = userRepository;
         }
+
         [HttpPost("Register")]
-        public async Task<IActionResult> RegisterAsync([FromBody]RegisterViewModel model)
+        public async Task<IActionResult> RegisterAsync([FromBody] RegisterViewModel model)
         {
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 var result = await _userRepository.RegisterUserAsync(model);
-                if(result.IsSuccess)
+                if (result.IsSuccess)
                 {
                     return Ok(result);
-                } else
+                }
+                else
                 {
                     return BadRequest(result.Message);
                 }
@@ -33,14 +34,14 @@ namespace PracticalNineteen.API.Controllers
             return BadRequest("Properties are not valid");
         }
         [HttpPost("Login")]
-        public async Task<IActionResult> LoginAsync([FromBody]LoginViewModel model)
+        public async Task<IActionResult> LoginAsync([FromBody] LoginViewModel model)
         {
             if (ModelState.IsValid)
             {
                 var result = await _userRepository.LoginUserAsync(model);
 
                 if (result.IsSuccess)
-                {                    
+                {
                     return Ok(result);
                 }
                 else
@@ -53,18 +54,17 @@ namespace PracticalNineteen.API.Controllers
         [HttpPost("Logout")]
         public async Task<IActionResult> LogoutAsync(Logout model)
         {
-            if(ModelState.IsValid)
-            {
-                await _userRepository.LogoutUserAsync(model);
-                return Ok();
-            }
-            return BadRequest();
+            await _userRepository.LogoutUserAsync(model);
+            return Ok();
+
         }
-        [Authorize(Roles = "Admin")]
+
         [HttpGet("Users")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
             var data = await _userRepository.GetUsers();
+            var ck = Request.Cookies;
             return Ok(data);
         }
     }

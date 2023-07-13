@@ -30,6 +30,8 @@ namespace PracticalNineTeen.Controllers
             {
                 return RedirectToAction("Login", "Account");   
             }
+            var token = Request.Cookies["userToken"].ToString();
+            _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             var response = await _httpClient.GetAsync("User/Users");
             if (response.StatusCode == HttpStatusCode.OK)
             {

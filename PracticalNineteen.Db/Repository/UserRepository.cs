@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using PracticalNineteen.Db.DatabaseContext;
 using PracticalNineteen.Db.Interfaces;
 using PracticalNineteen.Models.ViewModels;
 using System.Data;
@@ -16,18 +14,20 @@ namespace PracticalNineteen.Db.Repository
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
-        private readonly UserDbContext _userDbContext;
+        private readonly IConfiguration _configuration;
 
 
-        public UserRepository(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, SignInManager<IdentityUser> signInManager, UserDbContext userDbContext)
+        public UserRepository(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
         {
             _userManager = userManager;
             _roleManager = roleManager;
-            _signInManager = signInManager;
-            _userDbContext = userDbContext;
+            _configuration = configuration;
         }
-
+        /// <summary>
+        /// It login the with valid email password
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         public async Task<UserManagerRespose> LoginUserAsync(LoginViewModel model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
@@ -61,8 +61,7 @@ namespace PracticalNineteen.Db.Repository
                 claims.Add(new Claim(ClaimTypes.Role, role.ToString()));
             }
 
-            await _signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
-            var keys = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("abcdefghijklmnopqrstuvwxyz"));
+            var keys = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]));
 
             var token = new JwtSecurityToken(
                 claims: claims,
@@ -78,7 +77,11 @@ namespace PracticalNineteen.Db.Repository
                 Email = user.Email,
             };
         }
-
+        /// <summary>
+        /// It Register user in user table
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         public async Task<UserManagerRespose> RegisterUserAsync(RegisterViewModel model)
         {
             var email = await _userManager.FindByEmailAsync(model.Email);
@@ -123,17 +126,23 @@ namespace PracticalNineteen.Db.Repository
                 Errors = result.Errors.Select(e => e.Description)
             };
         }
-
+        /// <summary>
+        /// It Logout the user
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         public async Task<UserManagerRespose> LogoutUserAsync(Logout model)
         {
-            await _signInManager.SignOutAsync();
             return new UserManagerRespose
             {
                 Message = "User Signout",
                 IsSuccess = true,
             };
         }
-        
+        /// <summary>
+        /// It returns all the user available in database with roles
+        /// </summary>
+        /// <returns></returns>
         public async Task<IEnumerable<RegisteredUser>> GetUsers()
         {
 
